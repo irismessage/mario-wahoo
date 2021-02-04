@@ -2,13 +2,24 @@
 
 import os
 import random
+from pathlib import Path
 
 import ffmpeg
 
 
+# file structure this program uses:
+# mario/
+#   out_video
+#   clips/
+#     clips go here
+#   mario-code/
+#     main.py
+
 # todo: auto check duration of current working video
 iterations = 10
-out_video = '10hours.mp4'
+out_folder = Path().resolve().parent
+out_video = out_folder / '10hours.wav'
+clips_folder = out_folder / 'clips'
 clips = [
     '(itsame)mario.wav',
     'wa.wav',
@@ -37,15 +48,23 @@ def weighted_choice(choices, default_weight=100):
 
 def main():
     for i in range(iterations):
-        clip_to_add = weighted_choice(clips)
+        clip_to_add = clips_folder / weighted_choice(clips)
 
-        if out_video not in os.listdir():
-            ffmpeg.input(clip_to_add).output(out_video).run()
+        if not out_video.is_file():
+            ffmpeg.input(str(clip_to_add)).output(str(out_video)).run()
         else:
-            concat_input = f"file '{out_video}'\nfile '{clip_to_add}'"
-            ffmpeg.input(concat_input, format='concat', safe=0).output(f'new-{out_video}').run()
+            # ffmpeg takes / not \
+            out_video_f = str(out_video).replace('\\', '/')
+            clip_to_add_f = str(clip_to_add).replace('\\', '/')
+            concat_input = f"file '{out_video_f}'\nfile '{clip_to_add_f}'\n"
+            concat_input =
+            with open(out_folder / 'concat_input.txt', 'w') as concat_input_file:
+                concat_input_file.write(f"file '{out_video}'\nfile '{clip_to_add}'\n")
+            out_video_temp = out_video.with_name(f'{out_video.name}-temp')
+
+            ffmpeg.input('', format='concat', safe=0).output(str(out_video_temp)).run()
             os.remove(out_video)
-            os.rename(f'new-{out_video}', out_video)
+            os.rename(out_video_temp, out_video)
 
 
 if __name__ == '__main__':
