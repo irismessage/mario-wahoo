@@ -16,13 +16,14 @@ import ffprobe
 #   mario-code/
 #     main.py
 
-# todo: auto check duration of current working video
-iterations = 10
 out_folder = Path().resolve().parent
 out_video = out_folder / '10hours.wav'
+
 # wew long name
 out_video_target_duration_hours = 10
-out_video_target_duration_seconds = out_video_target_duration_hours * (60 ** 2)
+# out_video_target_duration_seconds = out_video_target_duration_hours * (60 ** 2)
+out_video_target_duration_seconds = 30
+duration_check_interval = 10
 clips_folder = out_folder / 'clips'
 clips = [
     '(itsame)mario.wav',
@@ -56,7 +57,7 @@ def over_duration_target(video_path=out_video, duration_target=out_video_target_
 
     metadata = ffprobe.FFProbe(str(video_path))
     for stream in metadata.streams:
-        if stream.is_video():
+        if stream.is_audio():
             return stream.duration_seconds() >= duration_target
 
 
@@ -77,9 +78,10 @@ def add_clip():
 
 
 def main():
-    # for i in range(iterations):
     while not over_duration_target():
-        add_clip()
+        # for speed, only check duration every 10 additions
+        for i in range(duration_check_interval):
+            add_clip()
 
 
 if __name__ == '__main__':
