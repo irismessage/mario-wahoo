@@ -8,9 +8,6 @@ import ffmpeg
 import ffprobe
 
 
-# todo: for speed, use file concatenation instead of demuxer concatenation - requires specific file format ?
-
-
 # file structure this program uses:
 # mario/
 #   out_video
@@ -21,6 +18,7 @@ import ffprobe
 
 out_folder = Path().resolve().parent
 out_video = out_folder / '10hours.wav'
+out_video_temp = out_video.with_stem(f'{out_video.stem}-temp')
 
 # wew long name
 out_video_target_duration_hours = 10
@@ -69,6 +67,18 @@ def over_duration_target(video_path=out_video, duration_target=out_video_target_
             return stream.duration_seconds() >= duration_target
 
 
+def concat_demuxer(clip_to_add):
+    concat_input = out_folder / 'concat_input.txt'
+    with open(out_folder / 'concat_input.txt', 'w') as concat_input_file:
+        concat_input_file.write(f"file '{out_video}'\nfile '{clip_to_add}'\n")
+
+    ffmpeg.input(str(concat_input), format='concat', safe=0).output(str(out_video_temp), c='copy').run()
+
+
+def concat_protocol(clip_to_add):
+    ffmpeg.input(f'concat:{out_video}|{clip_to_add}').output(str(out_video_temp), c='copy').run()
+
+
 def add_clip(banned):
     no_dupe = ['(itsame)mario.wav']
 
@@ -82,12 +92,7 @@ def add_clip(banned):
     if not out_video.is_file():
         ffmpeg.input(str(clip_to_add)).output(str(out_video)).run()
     else:
-        concat_input = out_folder / 'concat_input.txt'
-        with open(out_folder / 'concat_input.txt', 'w') as concat_input_file:
-            concat_input_file.write(f"file '{out_video}'\nfile '{clip_to_add}'\n")
-        out_video_temp = out_video.with_stem(f'{out_video.stem}-temp')
-
-        ffmpeg.input(str(concat_input), format='concat', safe=0).output(str(out_video_temp), c='copy').run()
+        concat_demuxer(clip_to_add)
         os.remove(out_video)
         os.rename(out_video_temp, out_video)
 
