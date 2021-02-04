@@ -16,8 +16,11 @@ import ffprobe
 #   mario-code/
 #     main.py
 
+# to switch between concat demuxer and concat protocol change this and the concat func to use
+audio_format = 'mpeg'
+
 out_folder = Path().resolve().parent
-out_video = out_folder / '10hours.wav'
+out_video = out_folder / f'10hours.{audio_format}'
 out_video_temp = out_video.with_stem(f'{out_video.stem}-temp')
 
 # wew long name
@@ -28,18 +31,19 @@ out_video_target_duration_seconds = out_video_target_duration_hours * (60 ** 2)
 duration_check_interval = 300
 clips_folder = out_folder / 'clips'
 clips = [
-    '(itsame)mario.wav',
-    'wa.wav',
-    'waha.wav',
-    'whoa.wav',
-    'wohoo.wav',
-    'woo.wav',
-    'ya.wav',
-    'yah.wav',
-    'yahh.wav',
-    'yahoo.wav',
-    'yippee.wav',
+    '(itsame)mario',
+    'wa',
+    'waha',
+    'whoa',
+    'wohoo',
+    'woo',
+    'ya',
+    'yah',
+    'yahh',
+    'yahoo',
+    'yippee',
 ]
+clips = [f'{clip}.{audio_format}' for clip in clips]
 
 
 def weighted_choice(choices, default_weight=100, banned=None):
@@ -79,8 +83,11 @@ def concat_protocol(clip_to_add):
     ffmpeg.input(f'concat:{out_video}|{clip_to_add}').output(str(out_video_temp), c='copy').run()
 
 
+concat = concat_protocol
+
+
 def add_clip(banned):
-    no_dupe = ['(itsame)mario.wav']
+    no_dupe = [f'(itsame)mario.{audio_format}']
 
     clip_to_add_name = weighted_choice(clips, banned=banned)
     clip_to_add = clips_folder / clip_to_add_name
@@ -92,7 +99,7 @@ def add_clip(banned):
     if not out_video.is_file():
         ffmpeg.input(str(clip_to_add)).output(str(out_video)).run()
     else:
-        concat_demuxer(clip_to_add)
+        concat(clip_to_add)
         os.remove(out_video)
         os.rename(out_video_temp, out_video)
 
