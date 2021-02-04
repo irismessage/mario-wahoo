@@ -1,6 +1,7 @@
 #!usr/bin/env python
 
 import os
+import time
 import random
 from pathlib import Path
 
@@ -68,7 +69,9 @@ def over_duration_target(video_path=out_video, duration_target=out_video_target_
     metadata = ffprobe.FFProbe(str(video_path))
     for stream in metadata.streams:
         if stream.is_audio():
-            return stream.duration_seconds() >= duration_target
+            seconds = stream.duration_seconds()
+            print(f"Done {seconds} seconds, {time.strftime('%H:%M:%S', time.gmtime(seconds))}")
+            return seconds >= duration_target
 
 
 def concat_demuxer(clip_to_add):
@@ -76,11 +79,13 @@ def concat_demuxer(clip_to_add):
     with open(out_folder / 'concat_input.txt', 'w') as concat_input_file:
         concat_input_file.write(f"file '{out_video}'\nfile '{clip_to_add}'\n")
 
-    ffmpeg.input(str(concat_input), format='concat', safe=0).output(str(out_video_temp), c='copy').run()
+    ffmpeg.input(str(concat_input), format='concat', safe=0).output(str(out_video_temp), c='copy')\
+        .global_args('-hide_banner', '-loglevel', 'warning').run()
 
 
 def concat_protocol(clip_to_add):
-    ffmpeg.input(f'concat:{out_video}|{clip_to_add}').output(str(out_video_temp), c='copy').run()
+    ffmpeg.input(f'concat:{out_video}|{clip_to_add}').output(str(out_video_temp), c='copy')\
+        .global_args('-hide_banner', '-loglevel', 'warning').run()
 
 
 concat = concat_protocol
