@@ -2,6 +2,7 @@
 
 import os
 import time
+import json
 import random
 from pathlib import Path
 
@@ -47,7 +48,7 @@ clips = [
 clips = [f'{clip}.{audio_format}' for clip in clips]
 
 
-def weighted_choice(choices, default_weight=100, banned=None):
+def weighted_choice(choices, default_weight=1, banned=None):
     if banned is None:
         banned = []
 
@@ -62,16 +63,20 @@ def weighted_choice(choices, default_weight=100, banned=None):
     return random.choice(choices_processed)
 
 
-def over_duration_target(video_path=out_video, duration_target=out_video_target_duration_seconds):
+def ffprobe_length_seconds(audio_path):
+    metadata = ffprobe.FFProbe(str(audio_path))
+    for stream in metadata.streams:
+        if stream.is_audio():
+            return stream.duration_seconds()
+
+
+def over_duration_target(audio_path=out_video, duration_target=out_video_target_duration_seconds):
     if not out_video.is_file():
         return False
 
-    metadata = ffprobe.FFProbe(str(video_path))
-    for stream in metadata.streams:
-        if stream.is_audio():
-            seconds = stream.duration_seconds()
-            print(f"Done {seconds} seconds, {time.strftime('%H:%M:%S', time.gmtime(seconds))}")
-            return seconds >= duration_target
+    seconds = ffprobe_length_seconds(audio_path)
+    print(f"Done {seconds} seconds, {time.strftime('%H:%M:%S', time.gmtime(seconds))}")
+    return seconds >= duration_target
 
 
 def concat_demuxer(clip_to_add):
@@ -91,7 +96,7 @@ def concat_protocol(clip_to_add):
 concat = concat_protocol
 
 
-def add_clip(banned):
+def get_clip(banned):
     no_dupe = [f'(itsame)mario.{audio_format}']
 
     clip_to_add_name = weighted_choice(clips, banned=banned)
@@ -100,6 +105,12 @@ def add_clip(banned):
         banned = []
     if clip_to_add_name in no_dupe:
         banned.append(clip_to_add_name)
+
+    return clip_to_add, banned
+
+
+def add_clip(banned):
+    clip_to_add, banned = get_clip(banned)
 
     if not out_video.is_file():
         ffmpeg.input(str(clip_to_add)).output(str(out_video)).run()
@@ -111,12 +122,32 @@ def add_clip(banned):
     return banned
 
 
-def main():
+def generate_list(clip_paths=None, duration_target=out_video_target_duration_seconds):
+    if clip_paths is None:
+        clip_paths = clips
+    clip_paths = [clips_folder / clip_path for clip_path in clip_paths]
+
+    print('Getting clip lengths with ffprobe')
+    clip_lengths = {clip_path: ffprobe_length_seconds(clip_path) for clip_path in clip_paths}
+
     banned = []
-    while not over_duration_target():
-        # for speed, only check duration every n additions
-        for i in range(duration_check_interval):
-            banned = add_clip(banned)
+    clip_plan = []
+
+    # while the total length of all clips in the plan is less than the target length
+    current_duration = 0
+    while current_duration < duration_target:
+        print(f"Done {current_duration} seconds, {time.strftime('%H:%M:%S', time.gmtime(current_duration))}")
+        clip_to_add, banned = get_clip(banned)
+        current_duration += clip_lengths[clip_to_add]
+        clip_plan.append(clip_to_add)
+
+    return clip_plan
+
+
+def main():
+    with open('clips.json', 'w') as json_file:
+        clip_plan = generate_list()
+        json.dump([str(clip_path) for clip_path in clip_plan], json_file)
 
 
 if __name__ == '__main__':
