@@ -109,7 +109,7 @@ def add_clip(banned):
 def main():
     banned = []
     while not over_duration_target():
-        # for speed, only check duration every 10 additions
+        # for speed, only check duration every n additions
         for i in range(duration_check_interval):
             banned = add_clip(banned)
 
