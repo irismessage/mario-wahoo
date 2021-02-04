@@ -53,16 +53,12 @@ def main():
         if not out_video.is_file():
             ffmpeg.input(str(clip_to_add)).output(str(out_video)).run()
         else:
-            # ffmpeg takes / not \
-            out_video_f = str(out_video).replace('\\', '/')
-            clip_to_add_f = str(clip_to_add).replace('\\', '/')
-            concat_input = f"file '{out_video_f}'\nfile '{clip_to_add_f}'\n"
-            concat_input =
+            concat_input = out_folder / 'concat_input.txt'
             with open(out_folder / 'concat_input.txt', 'w') as concat_input_file:
                 concat_input_file.write(f"file '{out_video}'\nfile '{clip_to_add}'\n")
-            out_video_temp = out_video.with_name(f'{out_video.name}-temp')
+            out_video_temp = out_video.with_stem(f'{out_video.stem}-temp')
 
-            ffmpeg.input('', format='concat', safe=0).output(str(out_video_temp)).run()
+            ffmpeg.input(str(concat_input), format='concat', safe=0).output(str(out_video_temp)).run()
             os.remove(out_video)
             os.rename(out_video_temp, out_video)
 
