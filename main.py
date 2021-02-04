@@ -8,7 +8,7 @@ import ffmpeg
 import ffprobe
 
 
-# todo: for speed, use file concatenation instead of demuxer concatenation - requires specific file format
+# todo: for speed, use file concatenation instead of demuxer concatenation - requires specific file format ?
 
 
 # file structure this program uses:
@@ -24,9 +24,10 @@ out_video = out_folder / '10hours.wav'
 
 # wew long name
 out_video_target_duration_hours = 10
-# out_video_target_duration_seconds = out_video_target_duration_hours * (60 ** 2)
-out_video_target_duration_seconds = 30
-duration_check_interval = 10
+out_video_target_duration_seconds = out_video_target_duration_hours * (60 ** 2)
+# out_video_target_duration_seconds = 30
+# if avg clip is about 1 second then the tolerance in seconds will be about equal to this. 5 minutes or so is ok so 300
+duration_check_interval = 300
 clips_folder = out_folder / 'clips'
 clips = [
     '(itsame)mario.wav',
@@ -86,7 +87,7 @@ def add_clip(banned):
             concat_input_file.write(f"file '{out_video}'\nfile '{clip_to_add}'\n")
         out_video_temp = out_video.with_stem(f'{out_video.stem}-temp')
 
-        ffmpeg.input(str(concat_input), format='concat', safe=0).output(str(out_video_temp)).run()
+        ffmpeg.input(str(concat_input), format='concat', safe=0).output(str(out_video_temp), c='copy').run()
         os.remove(out_video)
         os.rename(out_video_temp, out_video)
 
