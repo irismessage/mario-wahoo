@@ -71,7 +71,7 @@ def over_duration_target(video_path=out_video, duration_target=out_video_target_
 def add_clip(banned):
     no_dupe = ['(itsame)mario.wav']
 
-    clip_to_add_name = weighted_choice(clips, banned)
+    clip_to_add_name = weighted_choice(clips, banned=banned)
     clip_to_add = clips_folder / clip_to_add_name
     if banned:
         banned = []
