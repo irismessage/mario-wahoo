@@ -139,15 +139,22 @@ def generate_list(clip_paths=None, duration_target=out_video_target_duration_sec
         print(f"Done {current_duration} seconds, {time.strftime('%H:%M:%S', time.gmtime(current_duration))}")
         clip_to_add, banned = get_clip(banned)
         current_duration += clip_lengths[clip_to_add]
-        clip_plan.append(clip_to_add)
+        clip_plan.append(str(clip_to_add))
 
     return clip_plan
 
 
+def concat_protocol_many(clip_plan):
+    concat_input = f"concat:{'|'.join(clip_plan)}"
+    ffmpeg.input(concat_input).output(str(out_video), c='copy').run()
+
+
 def main():
-    with open('clips.json', 'w') as json_file:
+    with open('clip_plan.json', 'w') as json_file:
         clip_plan = generate_list()
-        json.dump([str(clip_path) for clip_path in clip_plan], json_file)
+        json.dump(clip_plan, json_file)
+
+    concat_protocol_many(clip_plan)
 
 
 if __name__ == '__main__':
