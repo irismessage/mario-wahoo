@@ -151,17 +151,11 @@ def concat_protocol_many(clip_plan):
 
 
 def main():
-    if os.path.isfile('clip_plan.json'):
-        with open('clip_plan.json', 'r') as json_file:
-            clip_plan = json.load(json_file)
-    else:
-        with open('clip_plan.json', 'w') as json_file:
-            clip_plan = generate_list()
-            json.dump(clip_plan, json_file)
-        with open('clip_plan.txt', 'w') as concat_file:
-            concat_file.writelines([f"file '{clip_path}'\n" for clip_path in clip_plan])
+    with open('clip_plan.txt', 'w') as concat_file:
+        clip_plan = generate_list()
+        concat_file.writelines([f"file '{clip_path}'\n" for clip_path in clip_plan])
 
-    concat_protocol_many(clip_plan)
+    ffmpeg.input('clip_plan.txt', format='concat', safe=0).output(str(out_video), c='copy').run()
 
 
 if __name__ == '__main__':
