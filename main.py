@@ -8,6 +8,9 @@ import ffmpeg
 import ffprobe
 
 
+# todo: for speed, use file concatenation instead of demuxer concatenation - requires specific file format
+
+
 # file structure this program uses:
 # mario/
 #   out_video
@@ -40,13 +43,17 @@ clips = [
 ]
 
 
-def weighted_choice(choices, default_weight=100):
+def weighted_choice(choices, default_weight=100, banned=None):
+    if banned is None:
+        banned = []
+
     choices_processed = []
     for choice in choices:
-        if not isinstance(choice, tuple):
-            choices_processed += [choice] * default_weight
-        else:
-            choices_processed += [choice[0]] * choice[1]
+        if choice not in banned:
+            if not isinstance(choice, tuple):
+                choices_processed += [choice] * default_weight
+            else:
+                choices_processed += [choice[0]] * choice[1]
 
     return random.choice(choices_processed)
 
@@ -61,8 +68,15 @@ def over_duration_target(video_path=out_video, duration_target=out_video_target_
             return stream.duration_seconds() >= duration_target
 
 
-def add_clip():
-    clip_to_add = clips_folder / weighted_choice(clips)
+def add_clip(banned):
+    no_dupe = ['(itsame)mario.wav']
+
+    clip_to_add_name = weighted_choice(clips, banned)
+    clip_to_add = clips_folder / clip_to_add_name
+    if banned:
+        banned = []
+    if clip_to_add_name in no_dupe:
+        banned.append(clip_to_add_name)
 
     if not out_video.is_file():
         ffmpeg.input(str(clip_to_add)).output(str(out_video)).run()
@@ -76,12 +90,15 @@ def add_clip():
         os.remove(out_video)
         os.rename(out_video_temp, out_video)
 
+    return banned
+
 
 def main():
+    banned = []
     while not over_duration_target():
         # for speed, only check duration every 10 additions
         for i in range(duration_check_interval):
-            add_clip()
+            banned = add_clip(banned)
 
 
 if __name__ == '__main__':
