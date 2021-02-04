@@ -146,13 +146,20 @@ def generate_list(clip_paths=None, duration_target=out_video_target_duration_sec
 
 def concat_protocol_many(clip_plan):
     concat_input = f"concat:{'|'.join(clip_plan)}"
+    print(concat_input)
     ffmpeg.input(concat_input).output(str(out_video), c='copy').run()
 
 
 def main():
-    with open('clip_plan.json', 'w') as json_file:
-        clip_plan = generate_list()
-        json.dump(clip_plan, json_file)
+    if os.path.isfile('clip_plan.json'):
+        with open('clip_plan.json', 'r') as json_file:
+            clip_plan = json.load(json_file)
+    else:
+        with open('clip_plan.json', 'w') as json_file:
+            clip_plan = generate_list()
+            json.dump(clip_plan, json_file)
+        with open('clip_plan.txt', 'w') as concat_file:
+            concat_file.writelines([f"file '{clip_path}'\n" for clip_path in clip_plan])
 
     concat_protocol_many(clip_plan)
 
