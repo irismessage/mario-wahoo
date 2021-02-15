@@ -19,19 +19,9 @@ clip_plan_path = clips_folder / '_clip_plan.txt'
 out_video_target_duration_hours = 10
 out_video_target_duration_seconds = out_video_target_duration_hours * (60 ** 2)
 
-clips = [
-    '(itsame)mario',
-    'wa',
-    'waha',
-    'whoa',
-    'wohoo',
-    'woo',
-    'ya',
-    'yah',
-    'yahh',
-    'yahoo',
-    'yippee',
-]
+with open('clips.txt') as clips_list_file:
+    clips = clips_list_file.readlines()
+clips = [clip.rstrip('\n') for clip in clips]
 clips = [f'{clip}.{audio_format}' for clip in clips]
 
 
