@@ -3,4 +3,6 @@
 __pycache__/
 
 clips/
+format.txt
 clips.txt
+no-dupe.txt

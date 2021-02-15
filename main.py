@@ -8,11 +8,12 @@ import ffmpeg
 import ffprobe
 
 
-audio_format = 'mp3'
+with open('format.txt') as file_format_file:
+    file_format = file_format_file.read().rstrip('\n')
 
 
 clips_folder = Path() / 'clips'
-out_video_path = clips_folder / f'_10hours.{audio_format}'
+out_video_path = clips_folder / f'_10hours.{file_format}'
 clip_plan_path = clips_folder / '_clip_plan.txt'
 
 # wew long name
@@ -22,7 +23,7 @@ out_video_target_duration_seconds = out_video_target_duration_hours * (60 ** 2)
 with open('clips.txt') as clips_list_file:
     clips = clips_list_file.readlines()
 clips = [clip.rstrip('\n') for clip in clips]
-clips = [f'{clip}.{audio_format}' for clip in clips]
+clips = [f'{clip}.{file_format}' for clip in clips]
 
 
 def weighted_choice(choices, default_weight=1, banned=None):
@@ -48,7 +49,10 @@ def ffprobe_length_seconds(audio_path):
 
 
 def get_clip(banned):
-    no_dupe = [f'(itsame)mario.{audio_format}']
+    with open('no-dupe.txt') as no_dupe_file:
+        no_dupe = no_dupe_file.readlines()
+    no_dupe = [no_dupe_item.rstrip('\n') for no_dupe_item in no_dupe]
+    no_dupe = [f'{no_dupe_item}.{file_format}' for no_dupe_item in no_dupe]
 
     clip_to_add_name = weighted_choice(clips, banned=banned)
     clip_to_add = clips_folder / clip_to_add_name
