@@ -26,6 +26,7 @@ clips = [clip.rstrip('\n') for clip in clips]
 clips = [f'{clip}.{file_format}' for clip in clips]
 
 
+# todo: replace this with builtin random.choices
 def weighted_choice(choices, default_weight=1, banned=None):
     if banned is None:
         banned = []
