@@ -82,7 +82,7 @@ def generate_list(clip_paths=None, duration_target=out_video_target_duration_sec
     print('Generating randomised list')
     print('Getting clip lengths with ffprobe')
     clip_lengths = {}
-    with concurrent.futures.ThreadPoolExecutor() as executor:
+    with concurrent.futures.Executor() as executor:
         executor.map(add_clip_length_to_dict, clip_paths, itertools.cycle([clip_lengths]))
 
     banned = []
@@ -94,7 +94,7 @@ def generate_list(clip_paths=None, duration_target=out_video_target_duration_sec
         print(f"Done {current_duration} seconds, {time.strftime('%H:%M:%S', time.gmtime(current_duration))}")
         clip_to_add, banned = get_clip(banned)
         current_duration += clip_lengths[clip_to_add]
-        clip_plan.append(str(clip_to_add))
+        clip_plan.append(clip_to_add)
 
     return clip_plan
 
@@ -103,7 +103,7 @@ def main():
     if not clip_plan_path.is_file():
         with open(clip_plan_path, 'w') as clip_plan_file:
             clip_plan = generate_list()
-            clip_plan_file.writelines([f"file '{clip_path}'\n" for clip_path in clip_plan])
+            clip_plan_file.writelines([f"file '{clip_path.name}'\n" for clip_path in clip_plan])
 
     print('Concatenating videos')
     ffmpeg.input(str(clip_plan_path), format='concat', safe=0).output(str(out_video_path), c='copy').run()
