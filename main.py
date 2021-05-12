@@ -2,6 +2,8 @@
 
 import time
 import random
+import itertools
+import concurrent.futures
 from pathlib import Path
 
 import ffmpeg
@@ -65,6 +67,13 @@ def get_clip(banned):
     return clip_to_add, banned
 
 
+def add_clip_length_to_dict(clip_path, clip_lengths: dict):
+    clip_length = ffprobe_length_seconds(clip_path)
+    clip_lengths[clip_path] = clip_length
+
+    print(f'{clip_path}: {clip_length}s')
+
+
 def generate_list(clip_paths=None, duration_target=out_video_target_duration_seconds):
     if clip_paths is None:
         clip_paths = clips
@@ -73,11 +82,8 @@ def generate_list(clip_paths=None, duration_target=out_video_target_duration_sec
     print('Generating randomised list')
     print('Getting clip lengths with ffprobe')
     clip_lengths = {}
-    for clip_path in clip_paths:
-        clip_length = ffprobe_length_seconds(clip_path)
-        clip_lengths[clip_path] = clip_length
-
-        print(f'{clip_path}: {clip_length}s')
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.map(add_clip_length_to_dict, clip_paths, itertools.cycle([clip_lengths]))
 
     banned = []
     clip_plan = []
