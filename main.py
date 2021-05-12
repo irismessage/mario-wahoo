@@ -9,7 +9,7 @@ import ffprobe
 
 
 with open('format.txt') as file_format_file:
-    file_format = file_format_file.read().rstrip('\n')
+    file_format = file_format_file.read().strip('\n. ')
 
 
 clips_folder = Path() / 'clips'
