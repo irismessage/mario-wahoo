@@ -85,7 +85,7 @@ def generate_list(clip_paths=None, duration_target=out_video_target_duration_sec
     print('Generating randomised list')
     print('Getting clip lengths with ffprobe')
     clip_lengths = {}
-    with concurrent.futures.Executor() as executor:
+    with concurrent.futures.ThreadPoolExecutor() as executor:
         executor.map(add_clip_length_to_dict, clip_paths, itertools.cycle([clip_lengths]))
 
     banned = []
