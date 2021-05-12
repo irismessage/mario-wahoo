@@ -28,20 +28,23 @@ clips = [clip.rstrip('\n') for clip in clips]
 clips = [f'{clip}.{file_format}' for clip in clips]
 
 
-# todo: replace this with builtin random.choices
 def weighted_choice(choices, default_weight=1, banned=None):
     if banned is None:
         banned = []
 
-    choices_processed = []
+    choices_population = []
+    choices_weights = []
     for choice in choices:
-        if choice not in banned:
-            if not isinstance(choice, tuple):
-                choices_processed += [choice] * default_weight
-            else:
-                choices_processed += [choice[0]] * choice[1]
+        if isinstance(choice, tuple):
+            choice_item, choice_weight = choice[0], choice[1]
+        else:
+            choice_item, choice_weight = choice, default_weight
 
-    return random.choice(choices_processed)
+        if choice_item not in banned:
+            choices_population.append(choice_item)
+            choices_weights.append(choice_weight)
+
+    return random.choices(choices_population, choices_weights)[0]
 
 
 def ffprobe_length_seconds(audio_path):
