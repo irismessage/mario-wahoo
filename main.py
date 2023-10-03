@@ -10,22 +10,22 @@ import ffmpeg
 import ffprobe
 
 
-with open('format.txt') as file_format_file:
-    file_format = file_format_file.read().strip('\n. ')
+with open("format.txt") as file_format_file:
+    file_format = file_format_file.read().strip("\n. ")
 
 
-clips_folder = Path() / 'clips'
-out_video_path = clips_folder / f'_10hours.{file_format}'
-clip_plan_path = clips_folder / '_clip_plan.txt'
+clips_folder = Path() / "clips"
+out_video_path = clips_folder / f"_10hours.{file_format}"
+clip_plan_path = clips_folder / "_clip_plan.txt"
 
 # wew long name
 out_video_target_duration_hours = 10
-out_video_target_duration_seconds = out_video_target_duration_hours * (60 ** 2)
+out_video_target_duration_seconds = out_video_target_duration_hours * (60**2)
 
-with open('clips.txt') as clips_list_file:
+with open("clips.txt") as clips_list_file:
     clips = clips_list_file.readlines()
-clips = [clip.rstrip('\n') for clip in clips]
-clips = [f'{clip}.{file_format}' for clip in clips]
+clips = [clip.rstrip("\n") for clip in clips]
+clips = [f"{clip}.{file_format}" for clip in clips]
 
 
 def weighted_choice(choices, default_weight=1, banned=None):
@@ -55,10 +55,10 @@ def ffprobe_length_seconds(audio_path):
 
 
 def get_clip(banned):
-    with open('no-dupe.txt') as no_dupe_file:
+    with open("no-dupe.txt") as no_dupe_file:
         no_dupe = no_dupe_file.readlines()
-    no_dupe = [no_dupe_item.rstrip('\n') for no_dupe_item in no_dupe]
-    no_dupe = [f'{no_dupe_item}.{file_format}' for no_dupe_item in no_dupe]
+    no_dupe = [no_dupe_item.rstrip("\n") for no_dupe_item in no_dupe]
+    no_dupe = [f"{no_dupe_item}.{file_format}" for no_dupe_item in no_dupe]
 
     clip_to_add_name = weighted_choice(clips, banned=banned)
     clip_to_add = clips_folder / clip_to_add_name
@@ -74,7 +74,7 @@ def add_clip_length_to_dict(clip_path, clip_lengths: dict):
     clip_length = ffprobe_length_seconds(clip_path)
     clip_lengths[clip_path] = clip_length
 
-    print(f'{clip_path}: {clip_length}s')
+    print(f"{clip_path}: {clip_length}s")
 
 
 def generate_list(clip_paths=None, duration_target=out_video_target_duration_seconds):
@@ -82,11 +82,13 @@ def generate_list(clip_paths=None, duration_target=out_video_target_duration_sec
         clip_paths = clips
     clip_paths = [clips_folder / clip_path for clip_path in clip_paths]
 
-    print('Generating randomised list')
-    print('Getting clip lengths with ffprobe')
+    print("Generating randomised list")
+    print("Getting clip lengths with ffprobe")
     clip_lengths = {}
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.map(add_clip_length_to_dict, clip_paths, itertools.cycle([clip_lengths]))
+        executor.map(
+            add_clip_length_to_dict, clip_paths, itertools.cycle([clip_lengths])
+        )
 
     banned = []
     clip_plan = []
@@ -94,7 +96,9 @@ def generate_list(clip_paths=None, duration_target=out_video_target_duration_sec
     # while the total length of all clips in the plan is less than the target length
     current_duration = 0
     while current_duration < duration_target:
-        print(f"Done {current_duration} seconds, {time.strftime('%H:%M:%S', time.gmtime(current_duration))}")
+        print(
+            f"Done {current_duration} seconds, {time.strftime('%H:%M:%S', time.gmtime(current_duration))}"
+        )
         clip_to_add, banned = get_clip(banned)
         current_duration += clip_lengths[clip_to_add]
         clip_plan.append(clip_to_add)
@@ -104,14 +108,18 @@ def generate_list(clip_paths=None, duration_target=out_video_target_duration_sec
 
 def main():
     if not clip_plan_path.is_file():
-        with open(clip_plan_path, 'w') as clip_plan_file:
+        with open(clip_plan_path, "w") as clip_plan_file:
             clip_plan = generate_list()
-            clip_plan_file.writelines([f"file '{clip_path.name}'\n" for clip_path in clip_plan])
+            clip_plan_file.writelines(
+                [f"file '{clip_path.name}'\n" for clip_path in clip_plan]
+            )
 
-    print('Concatenating videos')
-    ffmpeg.input(str(clip_plan_path), format='concat', safe=0).output(str(out_video_path), c='copy').run()
-    print('Done')
+    print("Concatenating videos")
+    ffmpeg.input(str(clip_plan_path), format="concat", safe=0).output(
+        str(out_video_path), c="copy"
+    ).run()
+    print("Done")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
